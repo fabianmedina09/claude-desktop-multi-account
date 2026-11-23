@@ -13,7 +13,7 @@ A guide and a script to run **two or more Claude Desktop accounts at the same ti
 ## Contents
 
 1. [Quick start](#quick-start)
-2. [What each parameter means](#what-each-parameter-means)
+2. [Usage and colours](#usage)
 3. [Signing in to the second account (read this)](#signing-in-to-the-second-account-read-this)
 4. [Opening the app later](#opening-the-app-later)
 5. [Step by step: what the script does](#step-by-step-what-the-script-does)
@@ -36,30 +36,74 @@ A guide and a script to run **two or more Claude Desktop accounts at the same ti
 ```bash
 git clone https://github.com/fabianmedina09/claude-desktop-multi-account.git
 cd claude-desktop-multi-account
-./create-account.sh "Claude Work" Claude-Work yellow
+./create-account.sh "Claude Work"
 ```
 
-It takes a couple of minutes. When it finishes you get `~/Applications/Claude Work.app`. Open it by double-clicking, then [sign in](#signing-in-to-the-second-account-read-this) with the other email.
+That is all you need: just the name. It takes a couple of minutes. When it finishes you get `~/Applications/Claude Work.app`. Open it by double-clicking, then [sign in](#signing-in-to-the-second-account-read-this) with the other email.
 
-## What each parameter means
+## Usage
 
 ```
-./create-account.sh  "NAME"  PROFILE  COLOUR
+./create-account.sh  "NAME"  [COLOUR]
 ```
 
-| Parameter | What it is for | Example | If omitted |
-|---|---|---|---|
-| `NAME` | **Display name** of the app: what the Dock, the menu bar and the `.app` file show. | `"Claude Work"` | Required |
-| `PROFILE` | **Folder where the session is stored** (cookies, login, history), at `~/Library/Application Support/<PROFILE>`. Two accounts = two different profiles. | `Claude-Work` | The name with dashes instead of spaces |
-| `COLOUR` | **Icon colour.** Derived from the original Claude icon by shifting its hue. | `yellow` | `yellow` |
+| Parameter | What it is for | If omitted |
+|---|---|---|
+| `NAME` | **Display name** of the app: what the Dock, the menu bar and the `.app` file show. | Required |
+| `COLOUR` | **Icon colour** (optional). A name or any hex colour. | A colour is generated from the name |
 
-Do not mix up the name and the profile. **The name is only what you see. The profile is what separates the sessions:** if two apps share a profile, they share the account.
+### Colour examples
 
-**Available colours:** `yellow`, `green`, `blue`, `purple`, `pink`, or a custom `ANGLE:EXPOSURE` in radians (for example `1.8:0.3`). **Yellow, green and blue** have been checked visually; purple and pink are untested hue calculations. If you do not like one, use the custom format.
+```bash
+# 1. No colour: one is picked for you from the name (same name = same colour, always)
+./create-account.sh "Claude Work"
 
-Changing the colour means changing the **icon**: the angle is the hue shift (0 = unchanged orange) and the exposure lightens or darkens it. Yellow needs more exposure (0.75) because a yellow with the same brightness as the original orange looks dark mustard.
+# 2. A named colour: yellow, green, blue, purple, pink, red, teal
+./create-account.sh "Claude Work" yellow
 
-Other option: `DEST=/some/folder ./create-account.sh …` puts the app somewhere other than `~/Applications`.
+# 3. Any hex colour, 6 digits...
+./create-account.sh "Claude Work" "#7C3AED"
+
+# 4. ...or 3 digits, with or without the "#"
+./create-account.sh "Claude Work" "#0af"
+./create-account.sh "Claude Work" 0af
+```
+
+> Quote hex colours that start with `#` (`"#7C3AED"`), because the shell treats an unquoted `#` as a comment.
+
+| You pass | You get |
+|---|---|
+| *(nothing)* | An automatic colour, always different from Claude's original orange |
+| `yellow` `green` `blue` `purple` `pink` `red` `teal` | A ready-made colour |
+| `"#F4B000"` | That exact colour (amber) |
+| `"#1E3A8A"` | Dark navy (the white star stays white) |
+| `"#7C3AED"` | Violet |
+| `"#0af"` | Same as `#00AAFF` |
+
+Only the orange background is recoloured: the white star, its glow and the shadow are left untouched, so any colour looks right, light or dark.
+
+### Where the session lives (no parameter needed)
+
+Each account keeps its own login in a folder derived from the name:
+
+| Name | Session folder |
+|---|---|
+| `"Claude Work"` | `~/Library/Application Support/Claude-Work` |
+| `"Claude Personal"` | `~/Library/Application Support/Claude-Personal` |
+
+The name is only what you see; **the folder is what separates the sessions**. Two apps that shared a folder would share the account, so each name gets its own. You never have to type it.
+
+Two optional environment variables, only if you need them:
+
+```bash
+# Put the app somewhere else (default: ~/Applications)
+DEST=/Applications ./create-account.sh "Claude Work"
+
+# Reuse an existing session folder (for example, one made with an older version of this script)
+PROFILE=Claude-Old-Name ./create-account.sh "Claude Work"
+```
+
+The name `Claude` itself is rejected, because that is the main app's own session folder.
 
 ## Signing in to the second account (read this)
 
@@ -93,7 +137,7 @@ The app should also appear in the **Apps / Launchpad** view. That needs the laun
 
 `create-account.sh` does five things. If you want to understand it or do it by hand, here is each one and why it exists.
 
-**1. A different-coloured icon.** It extracts the original icon (`electron.icns`) and changes its hue and exposure with CoreImage, producing a new `.icns`.
+**1. A different-coloured icon.** It extracts the original icon (`electron.icns`), measures the colour of its orange background, and recolours only the saturated pixels to your target colour (hue, saturation and brightness), leaving the white star untouched. It produces a new `.icns`.
 
 **2. A launcher.** It creates `~/Applications/<NAME>.app`, a tiny launcher (compiled AppleScript, via `osacompile`) with the same icon. This is what you double-click. It also gets its own bundle identifier so it shows up in the Apps view.
 
@@ -148,10 +192,10 @@ Things that were hard to discover (in case you do it by hand):
 **Remove an account:** drag `~/Applications/<NAME>.app` to the Trash. To delete the session too:
 
 ```bash
-rm -rf "$HOME/Library/Application Support/<PROFILE>"
+rm -rf "$HOME/Library/Application Support/Claude-Work"   # for an app called "Claude Work"
 ```
 
-**More than two accounts:** run the script again with another `NAME`, another `PROFILE` and another `COLOUR`. Each one is independent.
+**More than two accounts:** run the script again with another name (and, if you like, another colour). Each one is independent.
 
 ## Troubleshooting
 
