@@ -1,155 +1,170 @@
-# Claude Desktop con varias cuentas en macOS
+# Claude Desktop with multiple accounts on macOS
 
-Guía y script para tener **dos o más cuentas de Claude Desktop abiertas al mismo tiempo en un Mac**, cada una con:
+A guide and a script to run **two or more Claude Desktop accounts at the same time on a Mac**, each with:
 
-- su **nombre** propio (el que se ve en el Dock y en el menú),
-- su **icono** propio, de otro color,
-- su **sesión** independiente (otro correo, otro historial).
+- its own **name** (what you see in the Dock and the menu bar),
+- its own **icon**, in a different colour,
+- its own independent **session** (different email, different history).
 
-> **Aviso:** proyecto de la comunidad, **no oficial** y sin relación con Anthropic. «Claude» es una marca de Anthropic. El script no modifica tu `Claude.app` original: trabaja sobre una **copia** y la firma localmente. Úsalo bajo tu propia responsabilidad y revisa los términos de uso de Claude.
-
----
-
-## Índice
-
-1. [Inicio rápido](#inicio-rápido)
-2. [Qué es cada parámetro](#qué-es-cada-parámetro)
-3. [Iniciar sesión en la segunda cuenta (leer esto)](#iniciar-sesión-en-la-segunda-cuenta-leer-esto)
-4. [Paso a paso de lo que hace el script](#paso-a-paso-de-lo-que-hace-el-script)
-5. [Por qué no basta un solo comando](#por-qué-no-basta-un-solo-comando)
-6. [Actualizar, quitar, varias cuentas](#actualizar-quitar-varias-cuentas)
-7. [Solución de problemas](#solución-de-problemas)
+> **Disclaimer:** community project, **unofficial** and not affiliated with Anthropic. "Claude" is a trademark of Anthropic. The script does not modify your original `Claude.app`: it works on a **copy** and signs it locally. Use it at your own risk and check Claude's terms of use.
 
 ---
 
-## Inicio rápido
+## Contents
 
-**Requisitos**
+1. [Quick start](#quick-start)
+2. [What each parameter means](#what-each-parameter-means)
+3. [Signing in to the second account (read this)](#signing-in-to-the-second-account-read-this)
+4. [Opening the app later](#opening-the-app-later)
+5. [Step by step: what the script does](#step-by-step-what-the-script-does)
+6. [Why a single command is not enough](#why-a-single-command-is-not-enough)
+7. [Updating, removing, more accounts](#updating-removing-more-accounts)
+8. [Troubleshooting](#troubleshooting)
 
-- macOS con [Claude Desktop](https://claude.ai/download) instalado en `/Applications/Claude.app`.
-- Xcode Command Line Tools (para `swiftc` y `clang`): `xcode-select --install`.
-- Unos 700 MB libres por cuenta (la copia de la app pesa ~656 MB).
+---
 
-**Crear la cuenta**
+## Quick start
+
+**Requirements**
+
+- macOS with [Claude Desktop](https://claude.ai/download) installed at `/Applications/Claude.app`.
+- Xcode Command Line Tools (for `swiftc` and `clang`): `xcode-select --install`.
+- About 700 MB of free disk per account (the app copy is ~656 MB).
+
+**Create the account**
 
 ```bash
-git clone https://github.com/fabianmedina09/claude-desktop-multi-cuenta.git
-cd claude-desktop-multi-cuenta
-./crear-cuenta.sh "Claude Trabajo" Claude-Trabajo amarillo
+git clone https://github.com/fabianmedina09/claude-desktop-multi-account.git
+cd claude-desktop-multi-account
+./create-account.sh "Claude Work" Claude-Work yellow
 ```
 
-Tarda un par de minutos. Al terminar aparece `~/Applications/Claude Trabajo.app`. Ábrela con doble clic, o desde el Dock. Luego [inicia sesión](#iniciar-sesión-en-la-segunda-cuenta-leer-esto) con el otro correo.
+It takes a couple of minutes. When it finishes you get `~/Applications/Claude Work.app`. Open it by double-clicking, then [sign in](#signing-in-to-the-second-account-read-this) with the other email.
 
-## Qué es cada parámetro
+## What each parameter means
 
 ```
-./crear-cuenta.sh  "NOMBRE"  PERFIL  COLOR
+./create-account.sh  "NAME"  PROFILE  COLOUR
 ```
 
-| Parámetro | Para qué sirve | Ejemplo | Si no lo pones |
+| Parameter | What it is for | Example | If omitted |
 |---|---|---|---|
-| `NOMBRE` | **Nombre visible** de la app: lo que dice el Dock, el menú superior y el nombre del `.app`. | `"Claude Trabajo"` | Obligatorio |
-| `PERFIL` | **Carpeta donde se guarda la sesión** (cookies, login, historial). Vive en `~/Library/Application Support/<PERFIL>`. Dos cuentas = dos perfiles distintos. | `Claude-Trabajo` | El nombre con guiones en lugar de espacios |
-| `COLOR` | **Color del icono.** Sale del icono original de Claude con el tono cambiado. | `amarillo` | `amarillo` |
+| `NAME` | **Display name** of the app: what the Dock, the menu bar and the `.app` file show. | `"Claude Work"` | Required |
+| `PROFILE` | **Folder where the session is stored** (cookies, login, history), at `~/Library/Application Support/<PROFILE>`. Two accounts = two different profiles. | `Claude-Work` | The name with dashes instead of spaces |
+| `COLOUR` | **Icon colour.** Derived from the original Claude icon by shifting its hue. | `yellow` | `yellow` |
 
-Ojo: **no confundas el nombre con el perfil.** El nombre es solo lo que ves. El perfil es lo que separa las sesiones: si dos apps usan el mismo perfil, comparten la cuenta.
+Do not mix up the name and the profile. **The name is only what you see. The profile is what separates the sessions:** if two apps share a profile, they share the account.
 
-**Colores disponibles:** `amarillo`, `verde`, `azul`, `morado`, `rosa`, o uno propio como `ANGULO:EXPOSICION` en radianes (por ejemplo `1.8:0.3`). Solo **amarillo y verde** están verificados visualmente; azul, morado y rosa son cálculos de tono sin comprobar. Si alguno no te gusta, usa el formato propio.
+**Available colours:** `yellow`, `green`, `blue`, `purple`, `pink`, or a custom `ANGLE:EXPOSURE` in radians (for example `1.8:0.3`). **Yellow, green and blue** have been checked visually; purple and pink are untested hue calculations. If you do not like one, use the custom format.
 
-Cambiar el color es cambiar el **icono**: el ángulo es el tono (0 = sin cambio respecto al naranja original, 3.14 ≈ el opuesto) y la exposición lo aclara u oscurece. El amarillo necesita más exposición (0.75) porque un amarillo con el mismo brillo del naranja se ve mostaza oscuro.
+Changing the colour means changing the **icon**: the angle is the hue shift (0 = unchanged orange) and the exposure lightens or darkens it. Yellow needs more exposure (0.75) because a yellow with the same brightness as the original orange looks dark mustard.
 
-## Iniciar sesión en la segunda cuenta (leer esto)
+Other option: `DEST=/some/folder ./create-account.sh …` puts the app somewhere other than `~/Applications`.
 
-> **La segunda cuenta no deja iniciar sesión con Google.**
+## Signing in to the second account (read this)
+
+> **The second account does not let you sign in with Google.**
 >
-> Al pulsar «Continuar con Google» el navegador intenta **abrir Claude** (con un enlace `claude://…`) y macOS lo entrega a **la sesión principal**, la que ya estaba abierta, no a la segunda. Entonces ves la cuenta original en vez de la nueva.
+> When you click "Continue with Google", the browser tries to **open Claude** (through a `claude://…` link) and macOS hands it to **the main session**, the one that was already open, not to the second one. You end up in the original account instead of the new one.
 
-**Lo que funciona: iniciar sesión con correo y código**
+**What works: sign in with email and a code**
 
-1. En la ventana de la segunda app, elige **continuar con correo electrónico** y escribe el correo de la segunda cuenta.
-2. Claude te envía un **código** a ese correo.
-3. Abre el correo, **copia el código** y pégalo en la app. (Si el correo trae un enlace, no lo uses: usa el código.)
-4. **En ningún momento le digas al navegador que abra Claude.** Si aparece el aviso «¿Abrir Claude?», cancélalo o ciérralo. Ese aviso es justo lo que manda el inicio a la sesión principal.
-5. Pega el código en la app. Con eso la autenticación queda completa.
+1. In the second app's window, choose **continue with email** and type the email of the second account.
+2. Claude sends a **code** to that email.
+3. Open the email, **copy the code** from the browser/mail, and paste it into the app. (If the email also includes a link, do not use it: use the code.)
+4. **At no point tell the browser to open Claude.** If a prompt like "Open Claude?" appears, cancel or close it. That prompt is exactly what sends the login to the main session.
+5. Paste the code in the app. Once you do, authentication is complete.
 
-Esto se hace una sola vez. La sesión queda guardada en el perfil y las siguientes veces la app abre ya con esa cuenta.
+You only do this once. The session is stored in the profile, so next time the app opens already signed in.
 
-## Paso a paso de lo que hace el script
+## Opening the app later
 
-El script `crear-cuenta.sh` hace cinco cosas. Si quieres entenderlo o hacerlo a mano, aquí está cada una y por qué existe.
+The app lives in `~/Applications` (or wherever you set `DEST`). If it is not in your Dock, you can open it with:
 
-**1. Icono de otro color.** Extrae el icono original (`electron.icns`) y le cambia el tono y la exposición con CoreImage. Genera un `.icns` nuevo.
+- **Spotlight:** `Cmd+Space`, then type the app's name.
+- **Finder:** *Go → Go to Folder…* → `~/Applications`.
+- **Terminal:** `open ~/Applications/"Claude Work.app"`.
 
-**2. Lanzador.** Crea `~/Applications/<NOMBRE>.app`, un lanzador pequeño (AppleScript compilado con `osacompile`) con el mismo icono. Es lo que se abre con doble clic.
+To keep it in the Dock: open it, right-click its Dock icon → *Options* → *Keep in Dock*. The script also prints these hints when it finishes.
 
-**3. Copia de Claude con identidad propia.** Copia `/Applications/Claude.app` dentro del lanzador (`Contents/Resources/<NOMBRE>.app`) y le cambia:
+The app should also appear in the **Apps / Launchpad** view. That needs the launcher to have a bundle identifier, which the script sets (`local.multiaccount.<name>`). If you built an app with an older version of the script and it is missing there, re-run the script.
 
-- el icono (`electron.icns`),
-- `CFBundleIdentifier` → `com.anthropic.claudefordesktop.<nombre>` (para que macOS la trate como otra app),
-- `CFBundleDisplayName` → el nombre visible,
-- y **borra `CFBundleIconName`** del `Info.plist` (si no, el Dock sigue mostrando el icono original, porque lo toma del catálogo `Assets.car`).
+## Step by step: what the script does
 
-**4. Perfil fijo.** Cambia el ejecutable principal por un lanzador diminuto compilado en C que ejecuta el binario real (`Claude-bin`) **siempre** con `--user-data-dir=~/Library/Application Support/<PERFIL>`. Así, aunque abras la copia desde el icono del Dock, entra a su perfil y no al principal.
+`create-account.sh` does five things. If you want to understand it or do it by hand, here is each one and why it exists.
 
-**5. Firma y refresco.** Firma la copia de forma local (`codesign --sign -`), y reinicia el Dock para que muestre el icono nuevo.
+**1. A different-coloured icon.** It extracts the original icon (`electron.icns`) and changes its hue and exposure with CoreImage, producing a new `.icns`.
 
-Estructura final:
+**2. A launcher.** It creates `~/Applications/<NAME>.app`, a tiny launcher (compiled AppleScript, via `osacompile`) with the same icon. This is what you double-click. It also gets its own bundle identifier so it shows up in the Apps view.
+
+**3. A copy of Claude with its own identity.** It copies `/Applications/Claude.app` inside the launcher (`Contents/Resources/<NAME>.app`) and changes:
+
+- the icon (`electron.icns`),
+- `CFBundleIdentifier` → `com.anthropic.claudefordesktop.<name>` (so macOS treats it as a different app),
+- `CFBundleDisplayName` → the display name,
+- and it **deletes `CFBundleIconName`** from `Info.plist` (otherwise the Dock keeps showing the original icon, because it reads it from the `Assets.car` catalogue).
+
+**4. A pinned profile.** It replaces the main executable with a tiny C launcher that runs the real binary (`Claude-bin`) **always** with `--user-data-dir=~/Library/Application Support/<PROFILE>`. This way, even if you open the copy from its Dock icon, it goes to its own profile and not the main one.
+
+**5. Signing and refresh.** It signs the copy locally (`codesign --sign -`), registers it with Launch Services, and restarts the Dock so the new icon shows up.
+
+Final structure:
 
 ```
-~/Applications/<NOMBRE>.app              ← lanzador (lo que abres)
-└── Contents/Resources/<NOMBRE>.app      ← copia de Claude con identidad propia
-    └── Contents/MacOS/Claude            ← lanzador en C que fija el perfil
-        Contents/MacOS/Claude-bin        ← el binario real de Claude
+~/Applications/<NAME>.app              ← launcher (what you open)
+└── Contents/Resources/<NAME>.app      ← copy of Claude with its own identity
+    └── Contents/MacOS/Claude          ← C launcher that pins the profile
+        Contents/MacOS/Claude-bin      ← the real Claude binary
 ```
 
-## Por qué no basta un solo comando
+## Why a single command is not enough
 
-Lo más simple sería un lanzador que ejecute:
+The simplest approach is a launcher that runs:
 
 ```bash
-open -n -a "Claude" --args --user-data-dir="$HOME/Library/Application Support/Claude-Trabajo"
+open -n -a "Claude" --args --user-data-dir="$HOME/Library/Application Support/Claude-Work"
 ```
 
-Eso **sí abre una segunda instancia con otra sesión**, y sirve si solo quieres eso. Pero tiene límites:
+That **does open a second instance with a different session**, and it is enough if that is all you need. But it has limits:
 
-- **Se ve igual que la principal.** El Dock muestra el programa que corre (`Claude.app`), no el lanzador. Nombre «Claude» e icono naranja en las dos.
-- **Si la abres desde el Dock** (porque la dejaste fijada), macOS lanza la app sin el parámetro del perfil y entra a la sesión principal.
-- **Si abres la principal mientras la otra está abierta**, macOS a veces trae al frente la que ya existe, porque ambas son «la misma app».
+- **It looks identical to the main one.** The Dock shows the program that is running (`Claude.app`), not the launcher. Both show "Claude" and the orange icon.
+- **If you open it from the Dock** (because you pinned it), macOS launches the app without the profile argument and you land in the main session.
+- **If you open the main app while the other is running**, macOS sometimes brings the existing window to the front, because both are "the same app".
 
-Por eso el script usa una copia con identificador propio y fija el perfil dentro de la copia.
+That is why the script uses a copy with its own identifier and pins the profile inside the copy.
 
-Detalles que costó descubrir (por si lo haces a mano):
+Things that were hard to discover (in case you do it by hand):
 
-- Electron busca sus procesos auxiliares (`Claude Helper.app`, etc.) usando **`CFBundleName`**. Si lo cambias, falla con `Unable to find helper app`. Déjalo en `Claude` y cambia solo `CFBundleDisplayName`.
-- El ejecutable principal tiene que ser un binario real (Mach-O), no un script de shell.
-- Hay que **quitar `CFBundleIconName`** para que el Dock respete tu `.icns`.
-- Tras tocar el bundle hay que volver a firmarlo. Un archivo suelto dentro del `.app` rompe la firma (`unsealed contents present in the bundle root`).
+- Electron finds its helper processes (`Claude Helper.app`, etc.) using **`CFBundleName`**. If you change it, the app fails with `Unable to find helper app`. Leave it as `Claude` and change only `CFBundleDisplayName`.
+- The main executable must be a real binary (Mach-O), not a shell script.
+- You must **remove `CFBundleIconName`** for the Dock to respect your `.icns`.
+- After touching the bundle you must sign it again. A stray file inside the `.app` breaks the signature (`unsealed contents present in the bundle root`).
+- A launcher without a `CFBundleIdentifier` works, but does not show up in the Apps view / Launchpad.
 
-## Actualizar, quitar, varias cuentas
+## Updating, removing, more accounts
 
-**Cuando Claude Desktop se actualice**, la copia **no** se actualiza sola. Vuelve a correr el mismo comando: reconstruye la app y **conserva la sesión** (vive en el perfil, fuera de la app).
+**When Claude Desktop updates**, the copy does **not** update itself. Run the same command again: it rebuilds the app and **keeps your session** (it lives in the profile, outside the app).
 
-**Quitar una cuenta:** arrastra `~/Applications/<NOMBRE>.app` a la papelera. Para borrar también la sesión:
+**Remove an account:** drag `~/Applications/<NAME>.app` to the Trash. To delete the session too:
 
 ```bash
-rm -rf "$HOME/Library/Application Support/<PERFIL>"
+rm -rf "$HOME/Library/Application Support/<PROFILE>"
 ```
 
-**Más de dos cuentas:** corre el script otra vez con otro `NOMBRE`, otro `PERFIL` y otro `COLOR`. Cada una es independiente.
+**More than two accounts:** run the script again with another `NAME`, another `PROFILE` and another `COLOUR`. Each one is independent.
 
-**Dónde guarda la app el script:** por defecto en `~/Applications`. Cámbialo con `DESTINO=/otra/ruta ./crear-cuenta.sh …`.
+## Troubleshooting
 
-## Solución de problemas
-
-| Síntoma | Causa probable | Qué hacer |
+| Symptom | Likely cause | What to do |
 |---|---|---|
-| Al iniciar sesión se abre la cuenta principal | Usaste Google / dejaste que el navegador abriera Claude | [Entrar con correo y código](#iniciar-sesión-en-la-segunda-cuenta-leer-esto) |
-| El Dock muestra el icono o nombre viejo | Caché de macOS | Salir de la app, `killall Dock`, abrirla de nuevo |
-| `Unable to find helper app` | `CFBundleName` cambiado | Dejarlo en `Claude` |
-| No arranca, «incorrect executable format» | Firma rota o ejecutable no binario | Volver a correr el script |
-| Falta `swiftc` o `clang` | Sin Xcode Command Line Tools | `xcode-select --install` |
-| La app dejó de funcionar tras actualizar Claude | La copia quedó desactualizada | Volver a correr el script |
+| Signing in opens the main account | You used Google / let the browser open Claude | [Sign in with email and code](#signing-in-to-the-second-account-read-this) |
+| The Dock shows the old icon or name | macOS cache | Quit the app, run `killall Dock`, open it again |
+| App is not in Apps / Launchpad | Launcher has no bundle identifier (older script) | Re-run the script |
+| `Unable to find helper app` | `CFBundleName` was changed | Keep it as `Claude` |
+| Will not start, "incorrect executable format" | Broken signature or non-binary executable | Re-run the script |
+| `swiftc` or `clang` not found | No Xcode Command Line Tools | `xcode-select --install` |
+| App stopped working after a Claude update | The copy is out of date | Re-run the script |
 
-## Licencia
+## License
 
-MIT. Ver [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
